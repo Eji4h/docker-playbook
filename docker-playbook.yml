@@ -20,7 +20,7 @@
       default: "latest"
 
     - name: "users_to_docker_group"
-      prompt: "What is user to add to docker group"
+      prompt: "What is users to add to docker group"
       private: no
       default: ""
 
