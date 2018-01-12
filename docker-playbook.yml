@@ -1,0 +1,91 @@
+---
+- hosts: all
+  become: yes
+
+  vars_prompt:
+
+    - name: "docker_edition"
+      prompt: "What is docker edition to install? (ce/ee)"
+      private: no
+      default: "ce"
+
+    - name: "docker_channel"
+      prompt: "What is docker channel to install? (stable/edge)"
+      private: no
+      default: "stable"
+
+    - name: "docker_version"
+      prompt: "What is docker version to install?"
+      private: no
+      default: "latest"
+
+    - name: "users_to_docker_group"
+      prompt: "What is user to add to docker group"
+      private: no
+      default: ""
+
+    - name: "docker_compose_version"
+      prompt: 'Do you want to install docker-compose version? (Type "no" to not install)'
+      private: no
+      default: "1.18.0"
+
+  tasks:
+    - name: Apt update
+      apt:
+        update_cache: yes
+
+    - name: Ensure already install depend pacakge
+      apt:
+        name: "{{ item }}"
+      with_items: 
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - software-properties-common
+
+    - name: Ensure already install depend pacakge on debian only
+      apt:
+        name: gnupg2
+      when: ansible_distribution == "Debian"
+
+    - name: Ensure set upstream docker APT GPG key
+      apt_key:
+        url: https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg
+
+    - name: Ensure set upstream docker APT repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_lsb.codename | lower }} {{ docker_channel }}"
+
+    - name: Apt update again
+      apt:
+        update_cache: yes
+
+    - name: Ensure install docker with latest
+      apt:
+        name: "docker-ce"
+        state: latest
+      when: docker_version == "latest"
+
+    - name: Ensure install docker specify version
+      apt:
+        name: "docker-{{ docker_edition }}={{ docker_version }}~{{ docker_edition }}-0~{{ ansible_distribution | lower }}"
+      when: docker_version != "latest"
+
+    - name: Ensure users is in docker group
+      user:
+        name: "{{ item }}"
+        groups: docker
+        append: yes
+      with_items: "{{ users_to_docker_group }}"
+      when: users_to_docker_group | d()
+
+    - name: Ensure install Docker Compose
+      get_url:
+        url: 'https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-Linux-x86_64'
+        dest: '/usr/local/bin/docker-compose'
+        force: true
+        owner: 'root'
+        group: 'root'
+        mode: '0755'
+      when: docker_compose_version != "n" and docker_compose_version != "no" 
+
