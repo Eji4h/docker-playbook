@@ -27,7 +27,7 @@
     - name: "docker_compose_version"
       prompt: 'Do you want to install docker-compose version? (Type "no" to not install)'
       private: no
-      default: "1.18.0"
+      default: "1.22.0"
 
   tasks:
     - name: Apt update
