@@ -34,10 +34,20 @@
       apt:
         update_cache: yes
 
+    - name: Extra steps for AUFS
+      apt:
+        name: "{{ packages }}"
+      vars:
+        packages:
+        - linux-image-extra-{{ansible_kernel}}
+        - linux-image-extra-virtual
+      when: ansible_distribution == 'Ubuntu' and ansible_distribution_version == '14.04'
+
     - name: Ensure already install depend pacakge
       apt:
-        name: "{{ item }}"
-      with_items: 
+        name: "{{ packages }}"
+      vars:
+        packages:
         - apt-transport-https
         - ca-certificates
         - curl
